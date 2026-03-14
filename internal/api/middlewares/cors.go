@@ -5,9 +5,13 @@ import (
 	"net/http"
 )
 
+// api is hosted at www.myapi.com
+// frontend server is at www.myfrontend.com
+
 // Allowed origins
 var allowedOrigins = []string{
 	"https://my-origin-url.com",
+	"https://www.myfrontend.com",
 	"https://localhost:3000",
 }
 
@@ -29,6 +33,10 @@ func Cors(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Max-Age", "3600")
+
+		if r.Method == http.MethodOptions {
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})
