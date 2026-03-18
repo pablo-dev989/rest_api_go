@@ -12,62 +12,6 @@ import (
 	"strings"
 )
 
-func isValidSortOrder(order string) bool {
-	return order == "asc" || order == "desc"
-}
-
-func isValidSortField(field string) bool {
-	validFields := map[string]bool{
-		"first_name": true,
-		"last_name":  true,
-		"email":      true,
-		"class":      true,
-		"subject":    true,
-	}
-	return validFields[field]
-}
-
-func addSorting(r *http.Request, query string) string {
-	sortParams := r.URL.Query()["sortby"]
-	if len(sortParams) > 0 {
-		query += " ORDER BY"
-		for i, param := range sortParams {
-			parts := strings.Split(param, ":")
-			if len(parts) != 2 {
-				continue
-			}
-			field, order := parts[0], parts[1]
-			if !isValidSortField(field) || !isValidSortOrder(order) {
-				continue
-			}
-			if i > 0 {
-				query += ","
-			}
-			query += " " + field + " " + order
-		}
-	}
-	return query
-}
-
-func addFilters(r *http.Request, query string, args []interface{}) (string, []interface{}) {
-	params := map[string]string{
-		"first_name": "first_name",
-		"last_name":  "last_name",
-		"email":      "email",
-		"class":      "class",
-		"subject":    "subject",
-	}
-
-	for param, dbField := range params {
-		value := r.URL.Query().Get(param)
-		if value != "" {
-			query += " AND " + dbField + " = ?"
-			args = append(args, value)
-		}
-	}
-	return query, args
-}
-
 func GetTeachersDbHandler(teachers []models.Teacher, r *http.Request) ([]models.Teacher, error) {
 	db, err := ConnectDb()
 	if err != nil {
@@ -78,9 +22,9 @@ func GetTeachersDbHandler(teachers []models.Teacher, r *http.Request) ([]models.
 	query := "SELECT id, first_name, last_name, email, class, subject FROM teachers WHERE 1=1"
 	var args []interface{}
 
-	query, args = addFilters(r, query, args)
+	query, args = utils.AddFilters(r, query, args)
 
-	query = addSorting(r, query)
+	query = utils.AddSorting(r, query)
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
