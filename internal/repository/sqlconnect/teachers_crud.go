@@ -62,6 +62,54 @@ func GetTeacherByID(id int) (models.Teacher, error) {
 	return teacher, nil
 }
 
+func GetStudentsByTeacherIdFromDb(teacherId string, students []models.Student) ([]models.Student, error) {
+	db, err := ConnectDb()
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "Error connecting to DataBase")
+	}
+	defer db.Close()
+
+	query := `SELECT id, first_name, last_name, email, class FROM students WHERE class = (SELECT class FROM teachers WHERE id = ?)`
+	rows, err := db.Query(query, teacherId)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "Error retrieving data")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var student models.Student
+		err := rows.Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Error retrieving data")
+		}
+		students = append(students, student)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "Error retrieving data")
+	}
+	return students, nil
+}
+
+func GetStudentCountByTeacherIdFromDb(teacherId string) (int, error) {
+	db, err := ConnectDb()
+	if err != nil {
+		return 0, utils.ErrorHandler(err, "Error connecting to DataBase")
+	}
+
+	defer db.Close()
+
+	query := `SELECT COUNT(*) FROM students WHERE class = (SELECT class FROM teachers WHERE id = ?)`
+
+	var studentCount int
+
+	err = db.QueryRow(query, teacherId).Scan(&studentCount)
+	if err != nil {
+		return 0, utils.ErrorHandler(err, "Error retrieving data")
+	}
+	return studentCount, nil
+}
+
 func AddTeachersDbHandler(newTeachers []models.Teacher) ([]models.Teacher, error) {
 	db, err := ConnectDb()
 	if err != nil {

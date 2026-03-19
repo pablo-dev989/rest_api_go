@@ -182,7 +182,6 @@ func PatchOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Invalid Teacher Id", http.StatusBadRequest)
 		return
 	}
@@ -190,7 +189,6 @@ func PatchOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	var updates map[string]interface{}
 	err = json.NewDecoder(r.Body).Decode(&updates)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Invalid Request Payload", http.StatusBadRequest)
 		return
 	}
@@ -210,7 +208,6 @@ func DeleteOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Invalid Teacher Id", http.StatusBadRequest)
 		return
 	}
@@ -242,7 +239,6 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	var ids []int
 	err := json.NewDecoder(r.Body).Decode(&ids)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
@@ -261,4 +257,54 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		DeleteIDs: deletedIds,
 	}
 	json.NewEncoder(w).Encode(response)
+}
+
+func GetStudentsByTeacherId(w http.ResponseWriter, r *http.Request) {
+	teacherId := r.PathValue("id")
+
+	var students []models.Student
+
+	students, err := sqlconnect.GetStudentsByTeacherIdFromDb(teacherId, students)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Status string           `json:"status"`
+		Count  int              `json:"count"`
+		Data   []models.Student `json:"data"`
+	}{
+		Status: "success",
+		Count:  len(students),
+		Data:   students,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func GetStudentCountByTeacherId(w http.ResponseWriter, r *http.Request) {
+	teacherId := r.PathValue("id")
+
+	var studentCount int
+
+	studentCount, err := sqlconnect.GetStudentCountByTeacherIdFromDb(teacherId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Status string `json:"status"`
+		Count  int    `json:"count"`
+	}{
+		Status: "success",
+		Count:  studentCount,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+
 }

@@ -9,6 +9,7 @@ import (
 	"restapi/internal/models"
 	"restapi/pkg/utils"
 	"strconv"
+	"strings"
 )
 
 func isValidSortOrder(order string) bool {
@@ -97,6 +98,10 @@ func AddStudentsDbHandler(newStudents []models.Student) ([]models.Student, error
 		values := utils.GetStructValues(newStudent)
 		res, err := stmt.Exec(values...)
 		if err != nil {
+			fmt.Println("-------------Error:", err.Error())
+			if strings.Contains(err.Error(), "a foreign key constraint fails (`school`.`students`, CONSTRAINT `students_ibfk_1` FOREIGN KEY (`class`) REFERENCES `yeachers` (`class`))") {
+				return nil, utils.ErrorHandler(err, "class/class teacher dot not exist")
+			}
 			return nil, utils.ErrorHandler(err, "Error adding data")
 		}
 		lastID, err := res.LastInsertId()
