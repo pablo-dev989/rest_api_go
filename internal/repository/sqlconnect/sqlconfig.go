@@ -9,7 +9,6 @@ import (
 )
 
 func ConnectDb() (*sql.DB, error) {
-	fmt.Println("Trying to connect MariaDB.")
 	// err := godotenv.Load()
 	// if err != nil {
 	// 	return nil, err
@@ -29,7 +28,5 @@ func ConnectDb() (*sql.DB, error) {
 		return nil, err
 	}
 
-	// fmt.Println(connectionString)
-	fmt.Println("Connected to MariaDB.")
 	return db, nil
 }
